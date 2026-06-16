@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                  Int                   @id @default(autoincrement())
+  fullName            String
+  email               String                @unique
+  username            String                @unique
+  password            String
+  status              Boolean               @default(true)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  role                Role                  @default(STAFF)
+  tokenVersion        Int                   @default(0)
+  activities          Activity[]
+  contracts           Contract[]
+  documents           ContractDocument[]
+  contractExpiryAlert ContractExpiryAlert[]
+  customers           Customer[]
+  permissions         Permission[]
+  services            Service[]
+  suppliers           Supplier[]
+}
+
+model Permission {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  module    String
+  canRead   Boolean @default(false)
+  canWrite  Boolean @default(false)
+  canCreate Boolean @default(false)
+  canDelete Boolean @default(false)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, module])
+}
+
+model Customer {
+  id             Int        @id @default(autoincrement())
+  nameEn         String
+  nameKh         String?
+  addressEn      String?
+  addressKh      String?
+  taxId          String?    @unique
+  representative String
+  phone          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  userId         Int
+  status         Boolean    @default(true)
+  email          String?
+  notes          String?
+  contracts      Contract[]
+  createdBy      User       @relation(fields: [userId], references: [id])
+}
+
+model Supplier {
+  id          Int        @id @default(autoincrement())
+  nameEn      String
+  nameKh      String?
+  addressEn   String?
+  addressKh   String?
+  taxId       String?    @unique
+  contactName String
+  phone       String?
+  email       String?
+  status      Boolean    @default(true)
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userId      Int
+  contracts   Contract[]
+  createdBy   User       @relation(fields: [userId], references: [id])
+}
+
+model Service {
+  id           Int          @id @default(autoincrement())
+  name         String
+  description  String?
+  unitPrice    Decimal      @default(0)
+  unitType     String?
+  billingCycle BillingCycle @default(ONETIME)
+  productType  String?
+  status       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  userId       Int
+  createdBy    User         @relation(fields: [userId], references: [id])
+}
+
+model Contract {
+  id                  Int                   @id @default(autoincrement())
+  contractNumber      String                @unique
+  title               String
+  customerId          Int
+  supplierId          Int?
+  type                String
+  status              ContractStatus        @default(PENDING)
+  startDate           DateTime
+  endDate             DateTime
+  subtotal            Decimal               @default(0)
+  taxRate             Decimal               @default(0)
+  taxAmount           Decimal               @default(0)
+  grandTotal          Decimal               @default(0)
+  internalCost        Decimal               @default(0)
+  projectedProfit     Decimal               @default(0)
+  profitMargin        Decimal               @default(0)
+  notes               String?
+  version             String                @default("1.0")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  userId              Int
+  commitmentTerms     CommitmentTerm?
+  paymentTerms        PaymentTerm?
+  scopeOfWork         String?
+  activities          Activity[]
+  customer            Customer              @relation(fields: [customerId], references: [id])
+  supplier            Supplier?             @relation(fields: [supplierId], references: [id])
+  createdBy           User                  @relation(fields: [userId], references: [id])
+  documents           ContractDocument[]
+  contractExpiryAlert ContractExpiryAlert[]
+  lineItems           ContractLineItem[]
+}
+
+model ContractLineItem {
+  id             Int          @id @default(autoincrement())
+  contractId     Int
+  serviceName    String
+  quantity       Int          @default(1)
+  unitPrice      Decimal      @default(0)
+  discountType   DiscountType @default(NONE)
+  discountValue  Decimal      @default(0)
+  discountAmount Decimal      @default(0)
+  subtotal       Decimal      @default(0)
+  internalCost   Decimal      @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  contract       Contract     @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model ContractDocument {
+  id           Int              @id @default(autoincrement())
+  contractId   Int
+  uploadedById Int
+  name         String
+  fileUrl      String
+  fileType     String
+  category     DocumentCategory
+  versionLabel String?
+  notes        String?
+  createdAt    DateTime         @default(now())
+  contract     Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  uploadedBy   User             @relation(fields: [uploadedById], references: [id])
+}
+
+model Activity {
+  id         Int        @id @default(autoincrement())
+  contractId Int
+  userId     Int
+  userName   String
+  actionType ActionType
+  content    String?
+  fileUrl    String?
+  createdAt  DateTime   @default(now())
+  contract   Contract   @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id])
+}
+
+model CompanySettings {
+  id             Int      @id @default(autoincrement())
+  companyName    String
+  companyNameKh  String?
+  address        String
+  phone          String
+  email          String
+  vatTin         String?
+  defaultTaxRate Decimal  @default(0)
+  currency       String   @default("USD")
+  contractPrefix String   @default("CON-")
+  logoUrl        String?
+  updatedAt      DateTime @updatedAt
+}
+
+model ContractExpiryAlert {
+  id                Int                @id @default(autoincrement())
+  userId            Int
+  contractId        Int
+  dayBeforeExpiry   Int
+  isActive          Boolean            @default(true)
+  contractAlertLogs ContractAlertLog[]
+  contract          Contract           @relation(fields: [contractId], references: [id])
+  user              User               @relation(fields: [userId], references: [id])
+}
+
+model ContractAlertLog {
+  id                  Int                    @id @default(autoincrement())
+  ceaId               Int
+  notificationChannel NotificationChannel
+  alertDate           DateTime
+  sentAt              DateTime               @default(now())
+  status              ContractAlertLogStatus
+  contractExpiryAlert ContractExpiryAlert    @relation(fields: [ceaId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  MANAGER
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  RENEWED
+  PENDING_APPROVAL
+}
+
+enum CommitmentTerm {
+  MONTHLY
+  QUARTERLY
+  SEMESTER
+  ANNUALLY
+}
+
+enum PaymentTerm {
+  MONTHLY
+  QUARTERLY
+  SEMESTER
+  ANNUALLY
+}
+
+enum DiscountType {
+  NONE
+  PERCENTAGE
+  FIXED
+}
+
+enum BillingCycle {
+  ONETIME
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+enum DocumentCategory {
+  AGREEMENT
+  QUOTATION
+  INVOICE
+  AMENDMENT
+  OTHER
+}
+
+enum ActionType {
+  COMMENT
+  UPLOAD
+  STATUS_CHANGE
+  UPDATE
+  CREATED
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+}
+
+enum ContractAlertLogStatus {
+  SENT
+  READ
+  FAILED
+}
