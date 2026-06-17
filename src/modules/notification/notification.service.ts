@@ -338,6 +338,32 @@ const getAllPushedNofiticationsForUser = async (userId) => {
   return notifications;
 };
 
+export async function markNotificationAs(req: { ceaId: number; userId: number; status: "READ" | "SENT" }) {
+  const existingLog = await prisma.contractAlertLog.findFirst({
+    select: {
+      ceaId: true
+    },
+    where: {
+      AND: [
+        { id: req.ceaId },
+        { contractExpiryAlert: { userId: req.userId } },
+        { notificationChannel: "PUSH" }
+      ],
+    },
+  });
+
+  if (!existingLog) return;
+
+  await prisma.contractAlertLog.update({
+    data: {
+      status: req.status,
+    },
+    where: {
+      id: req.ceaId
+    }
+  });
+}
+
 export {
   createAlert,
   notifyUsers,
