@@ -127,22 +127,19 @@ router.post(
     } = req.body;
 
     // 1. Mandatory field validation
-    if (!contractNumber || !title || !customerId || !startDate || !endDate) {
+    if (!contractNumber || !startDate || !endDate) {
       throw new ApiError(
         400,
-        "Contract number, title, customer, start date and end date are required.",
+        "Contract number, start date and end date are required.",
       );
     }
 
     // 2. ID Validation
-    const parsedCustomerId = Number(customerId);
-    if (isNaN(parsedCustomerId)) {
-      throw new ApiError(400, "Invalid customer ID provided.");
-    }
-
+    const parsedCustomerId = customerId ? Number(customerId) : null;
     const parsedSupplierId = supplierId ? Number(supplierId) : null;
-    if (supplierId && isNaN(parsedSupplierId)) {
-      throw new ApiError(400, "Invalid supplier ID provided.");
+
+    if (!parsedCustomerId && !parsedSupplierId) {
+      throw new ApiError(400, "At least one party (Customer or Supplier) must be associated with the contract.");
     }
 
     // 3. Date Validation
@@ -155,11 +152,9 @@ router.post(
     const newContract = await prisma.contract.create({
       data: {
         contractNumber,
-        title,
-        customer: { connect: { id: parsedCustomerId } },
-        supplier: parsedSupplierId
-          ? { connect: { id: parsedSupplierId } }
-          : undefined,
+        title: title || `Contract ${contractNumber}`,
+        customer: parsedCustomerId ? { connect: { id: parsedCustomerId } } : undefined,
+        supplier: parsedSupplierId ? { connect: { id: parsedSupplierId } } : undefined,
         type: type || "General",
         status: status || "DRAFT",
         commitmentTerms: commitmentTerms || null,
