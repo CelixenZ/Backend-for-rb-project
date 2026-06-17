@@ -7,7 +7,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "start": "node dist/server.js",
-    "dev": "ts-node src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "dev:watch": "nodemon --exec ts-node src/server.ts",
     "lint": "tsc --noEmit",
     "type-check": "tsc --noEmit"
@@ -45,6 +45,7 @@
     "@types/pg": "^8.20.0",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
