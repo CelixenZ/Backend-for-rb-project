@@ -97,7 +97,7 @@ model Contract {
   id                  Int                   @id @default(autoincrement())
   contractNumber      String                @unique
   title               String
-  customerId          Int
+  customerId          Int?
   supplierId          Int?
   type                String
   status              ContractStatus        @default(PENDING)
@@ -119,8 +119,9 @@ model Contract {
   paymentTerms        PaymentTerm?
   scopeOfWork         String?
   activities          Activity[]
-  customer            Customer              @relation(fields: [customerId], references: [id])
+  customer            Customer?             @relation(fields: [customerId], references: [id])
   supplier            Supplier?             @relation(fields: [supplierId], references: [id])
+
   createdBy           User                  @relation(fields: [userId], references: [id])
   documents           ContractDocument[]
   contractExpiryAlert ContractExpiryAlert[]
