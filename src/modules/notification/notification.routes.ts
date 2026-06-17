@@ -1,8 +1,10 @@
-import { Router } from "express";
+import { Router, Response } from "express";
 import { protect } from "../../middleware/auth.middleware";
 import * as notificationService from "./notification.service";
 import ApiError from "../../shared/utils/apiError";
 import { getAllAlertByContractIdForUser } from "./contractAlert.repo";
+import { zodValidateMiddleware } from "../../middleware/validate.middleware";
+import { markNotificationAsSchema } from "./notification.schema";
 
 const router = Router();
 
@@ -68,7 +70,7 @@ router.get("/id/:contractId", protect, async (req: any, res) => {
     return res.status(200).json(result);
 });
 
-router.put("/:contractId", protect, async (req: any, res) => {
+router.put("/edit/:contractId", protect, async (req: any, res) => {
     if (req.user.role && req.user.role !== "ADMIN") {
         return res.status(403).json("Access Denied");
     }
@@ -104,5 +106,25 @@ router.get("/push", protect, async (req: any, res) => {
     const notifications = await notificationService.getAllPushedNofiticationsForUser(req.user.id);
     return res.status(200).json(notifications);
 });
+
+router.put("/mark-as", protect, zodValidateMiddleware(markNotificationAsSchema),  async (req: any, res: Response) => {
+    if (req.user.role && req.user.role !== "ADMIN") {
+        return res.status(403).json({
+            error: "Access Denied"
+        });
+    }
+
+    const userId: number = parseInt(req.user.id);
+    const ceaId: number = parseInt(req.query.ceaId);
+    const status: "READ" | "SENT" = req.query.status;
+
+    await notificationService.markNotificationAs({
+        ceaId, userId, status
+    });
+
+    return res.status(200).json({
+        message: "Successfully marked notification"
+    });
+})
 
 export default router;
