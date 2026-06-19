@@ -5,6 +5,8 @@ import { convertToKhTime } from "../../shared/utils/timezoneUtil";
 import * as contractAlertRepo from "./contractAlert.repo";
 import * as mailSender from "../../shared/utils/mailSender";
 import { isUserOnline } from "../../websocket/util";
+import { getIO } from "../../websocket";
+import { SOCKET_EVENT } from "../../websocket/constants/socketEvent";
 
 const createAlert = async ({ contractId, userId, dayBeforeExpiry }) => {
   if (dayBeforeExpiry < 1) {
@@ -184,7 +186,7 @@ const editManyAlerts = async ({ userId, contractId, daysBeforeExpiry }) => {
 /**
  * @param {import("socket.io").Socket} io
  */
-const notifyUsers = async (io) => {
+const notifyUsers = async () => {
   const activeAlert = await contractAlertRepo.getAllActiveAlertContract();
   const completedAlert = [];
 
@@ -213,7 +215,6 @@ const notifyUsers = async (io) => {
         contractTitle: i.contract.title,
         daysBeforeExpiry: i.dayBeforeExpiry,
         endDate: i.contract.endDate,
-        io: io,
       });
 
       const alertDateTimestamp =
@@ -268,8 +269,7 @@ const notifyUserByEmail = async ({
   }
 };
 
-const notifyUserByPush = async ({
-  io,
+export const notifyUserByPush = async ({
   userId,
   contractId,
   contractTitle,
@@ -277,14 +277,16 @@ const notifyUserByPush = async ({
   endDate,
 }) => {
   try {
+    const io = getIO();
     if (isUserOnline(io, userId)) {
-      io.to(String(userId)).emit("remider-alert", {
+      io.to(userId).emit(SOCKET_EVENT.CONTRACT_EXPIRY, {
         contractTitle,
         daysBeforeExpiry,
         contractId,
         endDate,
       });
     }
+    console.log(`pushed notification to room id: ${userId}`)
     return true;
   } catch (error) {
     return false;

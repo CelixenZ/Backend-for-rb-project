@@ -13,6 +13,8 @@ const envSchema = z.object({
   MAIL_SECURE: z.string().min(1, "MAIL_SECURE is required").transform(Boolean),
   MAIL_USER: z.string().min(1, "MAIL_USER is required"),
   MAIL_PWD: z.string().min(1, "MAIL_PWD is required"),
+  NODE_ENV: z.string().default("dev"),
+  CLIENT_URL: z.string().min(1, "CLIENT_URL is required")
 });
 
 const parsed = envSchema.safeParse(process.env);
