@@ -3,7 +3,7 @@ import { createNotificationJob } from "./notificationJob";
 
 const jobs = new Map();
 
-function registerJobs(io: Socket) {
+function registerJobs() {
   const notificationJob = createNotificationJob();
   jobs.set("notification", notificationJob);
 }

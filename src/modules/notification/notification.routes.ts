@@ -41,12 +41,16 @@ router.post("/create-many", protect, async (req: any, res) => {
 
     const { contractId, daysBeforeExpiry } = req.body;
     try {
+        // create for current user
         await notificationService.createManyAlert({ 
             contractId: parseInt(contractId), 
             userId: req.user.id, 
             daysBeforeExpiry 
         });
-        return res.status(201).json("Created alerted successfully");
+
+        // create default alert for all ADMIN
+        
+        return res.status(201).json("Created alert successfully");
     } catch (error) {
         if (error instanceof ApiError) {
             console.error(error.message)
