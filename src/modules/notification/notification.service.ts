@@ -147,6 +147,9 @@ const createManyAlert = async ({ contractId, userId, daysBeforeExpiry }) => {
   await prisma.contractExpiryAlert.createMany({
     data: condition,
   });
+
+  const defaultAlertDates = [90, 60, 30].filter(i => i < daysDifferent);
+  await createDefaultAlertForAdminExcludeCreator(userId, existingContract.id, defaultAlertDates);
 };
 
 const editManyAlerts = async ({ userId, contractId, daysBeforeExpiry }) => {
@@ -183,9 +186,6 @@ const editManyAlerts = async ({ userId, contractId, daysBeforeExpiry }) => {
   });
 };
 
-/**
- * @param {import("socket.io").Socket} io
- */
 const notifyUsers = async () => {
   const activeAlert = await contractAlertRepo.getAllActiveAlertContract();
   const completedAlert = [];
@@ -193,6 +193,9 @@ const notifyUsers = async () => {
   const now = new Date();
   const nowUTC = new Date(now.toISOString());
   nowUTC.setHours(0, 0, 0, 0);
+
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   for (const i of activeAlert) {
     const daysDifferent = Math.floor(
@@ -239,6 +242,11 @@ const notifyUsers = async () => {
           : ContractAlertLogStatus.FAILED,
       });
     }
+
+    /**
+     * 1 notification/10 seconds
+     */
+    await sleep(10_000);
   }
 
   if (completedAlert.length > 0) {
@@ -286,7 +294,7 @@ export const notifyUserByPush = async ({
         endDate,
       });
     }
-    console.log(`pushed notification to room id: ${userId}`)
+    console.log(`pushed notification to room id: ${userId}`);
     return true;
   } catch (error) {
     return false;
@@ -336,20 +344,23 @@ const getAllPushedNofiticationsForUser = async (userId) => {
       { status: "desc" },
     ],
   });
-
   return notifications;
 };
 
-export async function markNotificationAs(req: { ceaId: number; userId: number; status: "READ" | "SENT" }) {
+export async function markNotificationAs(req: {
+  ceaId: number;
+  userId: number;
+  status: "READ" | "SENT";
+}) {
   const existingLog = await prisma.contractAlertLog.findFirst({
     select: {
-      ceaId: true
+      ceaId: true,
     },
     where: {
       AND: [
         { id: req.ceaId },
         { contractExpiryAlert: { userId: req.userId } },
-        { notificationChannel: "PUSH" }
+        { notificationChannel: "PUSH" },
       ],
     },
   });
@@ -361,8 +372,38 @@ export async function markNotificationAs(req: { ceaId: number; userId: number; s
       status: req.status,
     },
     where: {
-      id: req.ceaId
-    }
+      id: req.ceaId,
+    },
+  });
+}
+
+/**
+ * create default alert for ADMIN when new contract is created, except creator
+ */
+async function createDefaultAlertForAdminExcludeCreator(
+  creatorId: number,
+  contractId: number,
+  alertDates: number[], // 90, 60, 30
+) {
+  const admins = await prisma.user.findMany({
+    select: { id: true },
+    where: {
+      role: "ADMIN",
+      status: true,
+      id: { not: creatorId },
+    },
+  });
+
+  const newAlerts = admins.flatMap((i) =>
+    alertDates.map((j) => ({
+      contractId,
+      dayBeforeExpiry: j,
+      userId: i.id,
+    })),
+  );
+
+  await prisma.contractExpiryAlert.createMany({
+    data: newAlerts,
   });
 }
 
