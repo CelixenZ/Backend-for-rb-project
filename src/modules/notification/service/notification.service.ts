@@ -1,12 +1,14 @@
 import { ContractAlertLogStatus, NotificationChannel } from "@prisma/client";
-import prisma from "../../config/prisma";
-import ApiError from "../../shared/utils/apiError";
-import { convertToKhTime } from "../../shared/utils/timezoneUtil";
-import * as contractAlertRepo from "./contractAlert.repo";
-import * as mailSender from "../../shared/utils/mailSender";
-import { isUserOnline } from "../../websocket/util";
-import { getIO } from "../../websocket";
-import { SOCKET_EVENT } from "../../websocket/constants/socketEvent";
+import prisma from "../../../config/prisma";
+import ApiError from "../../../shared/utils/apiError";
+import { convertToKhTime } from "../../../shared/utils/timezoneUtil";
+import * as contractAlertRepo from "../contractAlert.repo";
+import * as mailSender from "../../../shared/utils/mailSender";
+import { isUserOnline } from "../../../websocket/util";
+import { getIO } from "../../../websocket";
+import { SOCKET_EVENT } from "../../../websocket/constants/socketEvent";
+import { renderTemplateAsync } from "../util/emailTemplateHelper";
+import { env } from "../../../config/env.config";
 
 const createAlert = async ({ contractId, userId, dayBeforeExpiry }) => {
   if (dayBeforeExpiry < 1) {
@@ -189,7 +191,6 @@ const editManyAlerts = async ({ userId, contractId, daysBeforeExpiry }) => {
 const notifyUsers = async () => {
   const activeAlert = await contractAlertRepo.getAllActiveAlertContract();
   const completedAlert = [];
-
   const now = new Date();
   const nowUTC = new Date(now.toISOString());
   nowUTC.setHours(0, 0, 0, 0);
@@ -210,6 +211,9 @@ const notifyUsers = async () => {
         contractTitle: i.contract.title,
         daysBeforeExpiry: i.dayBeforeExpiry,
         endDate: i.contract.endDate,
+        contractNumber: i.contract.contractNumber,
+        organizationName: "Unknown",
+        startDate: i.contract.startDate
       });
 
       const pushed = await notifyUserByPush({
@@ -257,18 +261,31 @@ const notifyUsers = async () => {
   }
 };
 
-const notifyUserByEmail = async ({
+export const notifyUserByEmail = async ({
   email,
   contractId,
   contractTitle,
   daysBeforeExpiry,
   endDate,
+  contractNumber,
+  organizationName,
+  startDate
 }) => {
   try {
+    const html = await renderTemplateAsync({
+      contractNumber,
+      contractTitle,
+      expiryDate: endDate,
+      organizationName,
+      remainingDays: daysBeforeExpiry,
+      startDate,
+      viewContractURL: `${env.CLIENT_URL}/admin/contracts${contractId}`
+    })
     await mailSender.sendMail({
       to: email,
-      body: `Contract: ${contractTitle} will be expired in the next: ${daysBeforeExpiry}. Expired date: ${convertToKhTime(endDate)}`,
-      subject: "Contract Expiration Alert",
+      html: html,
+      subject: "Contract Expiry Alert – Action Required",
+      text: ""
     });
     return true;
   } catch (error) {
@@ -294,7 +311,6 @@ export const notifyUserByPush = async ({
         endDate,
       });
     }
-    console.log(`pushed notification to room id: ${userId}`);
     return true;
   } catch (error) {
     return false;

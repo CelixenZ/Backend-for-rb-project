@@ -9,6 +9,8 @@ function registerJobs() {
 }
 
 function startAllJobs() {
+  registerJobs();
+
   jobs.forEach((job, name) => {
     job.start();
     console.log(`Started job: ${name}`);
@@ -22,4 +24,4 @@ function stopAllJobs() {
   });
 }
 
-export { registerJobs, startAllJobs, stopAllJobs };
+export { startAllJobs, stopAllJobs };

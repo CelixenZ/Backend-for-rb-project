@@ -1,11 +1,20 @@
-import transporter from "../../config/mail.config";
+import { env } from "../../config/env.config";
+import { transporter } from "../../config/mail.config";
 
-export async function sendMail({ to, subject, body }) {
+interface SendMailProps {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+}
+
+export async function sendMail({ to, subject, html, text }: SendMailProps) {
     await transporter.sendMail({
-        from: process.env.MAIL_USER,
+        from: env.MAIL_USER,
         to: to,
         subject: subject,
-        html: body
+        html: html,
+        text: text,
     });
 }
 
