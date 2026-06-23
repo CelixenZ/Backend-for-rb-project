@@ -8,6 +8,7 @@
     "build:watch": "tsc --watch",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
+    "test": "tsx watch src/sandbox/index.ts",
     "dev:watch": "nodemon --exec ts-node src/server.ts",
     "lint": "tsc --noEmit",
     "type-check": "tsc --noEmit"

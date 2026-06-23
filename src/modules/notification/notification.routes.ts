@@ -1,6 +1,6 @@
 import { Router, Response } from "express";
 import { protect } from "../../middleware/auth.middleware";
-import * as notificationService from "./notification.service";
+import * as notificationService from "./service/notification.service";
 import ApiError from "../../shared/utils/apiError";
 import { getAllAlertByContractIdForUser } from "./contractAlert.repo";
 import { zodValidateMiddleware } from "../../middleware/validate.middleware";

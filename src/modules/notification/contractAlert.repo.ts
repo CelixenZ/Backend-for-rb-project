@@ -17,6 +17,8 @@ const getAllActiveAlertContract = async () => {
         select: {
           title: true,
           endDate: true,
+          contractNumber: true,
+          startDate: true
         },
       },
     },
