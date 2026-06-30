@@ -1,9 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["icms"] // Keeps your tables tied to the icms schema
 }
 
 model User {
@@ -25,6 +27,8 @@ model User {
   permissions         Permission[]
   services            Service[]
   suppliers           Supplier[]
+
+  @@schema("icms")
 }
 
 model Permission {
@@ -38,6 +42,7 @@ model Permission {
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, module])
+  @@schema("icms")
 }
 
 model Customer {
@@ -57,6 +62,8 @@ model Customer {
   notes          String?
   contracts      Contract[]
   createdBy      User       @relation(fields: [userId], references: [id])
+
+  @@schema("icms")
 }
 
 model Supplier {
@@ -76,6 +83,8 @@ model Supplier {
   userId      Int
   contracts   Contract[]
   createdBy   User       @relation(fields: [userId], references: [id])
+
+  @@schema("icms")
 }
 
 model Service {
@@ -91,6 +100,8 @@ model Service {
   updatedAt    DateTime     @updatedAt
   userId       Int
   createdBy    User         @relation(fields: [userId], references: [id])
+
+  @@schema("icms")
 }
 
 model Contract {
@@ -121,11 +132,12 @@ model Contract {
   activities          Activity[]
   customer            Customer?             @relation(fields: [customerId], references: [id])
   supplier            Supplier?             @relation(fields: [supplierId], references: [id])
-
   createdBy           User                  @relation(fields: [userId], references: [id])
   documents           ContractDocument[]
   contractExpiryAlert ContractExpiryAlert[]
   lineItems           ContractLineItem[]
+
+  @@schema("icms")
 }
 
 model ContractLineItem {
@@ -142,6 +154,8 @@ model ContractLineItem {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   contract       Contract     @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@schema("icms")
 }
 
 model ContractDocument {
@@ -157,6 +171,8 @@ model ContractDocument {
   createdAt    DateTime         @default(now())
   contract     Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
   uploadedBy   User             @relation(fields: [uploadedById], references: [id])
+
+  @@schema("icms")
 }
 
 model Activity {
@@ -170,6 +186,8 @@ model Activity {
   createdAt  DateTime   @default(now())
   contract   Contract   @relation(fields: [contractId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id])
+
+  @@schema("icms")
 }
 
 model CompanySettings {
@@ -185,6 +203,8 @@ model CompanySettings {
   contractPrefix String   @default("CON-")
   logoUrl        String?
   updatedAt      DateTime @updatedAt
+
+  @@schema("icms")
 }
 
 model ContractExpiryAlert {
@@ -196,6 +216,8 @@ model ContractExpiryAlert {
   contractAlertLogs ContractAlertLog[]
   contract          Contract           @relation(fields: [contractId], references: [id])
   user              User               @relation(fields: [userId], references: [id])
+
+  @@schema("icms")
 }
 
 model ContractAlertLog {
@@ -206,12 +228,16 @@ model ContractAlertLog {
   sentAt              DateTime               @default(now())
   status              ContractAlertLogStatus
   contractExpiryAlert ContractExpiryAlert    @relation(fields: [ceaId], references: [id])
+
+  @@schema("icms")
 }
 
 enum Role {
   ADMIN
   STAFF
   MANAGER
+
+  @@schema("icms")
 }
 
 enum ContractStatus {
@@ -222,6 +248,8 @@ enum ContractStatus {
   TERMINATED
   RENEWED
   PENDING_APPROVAL
+
+  @@schema("icms")
 }
 
 enum CommitmentTerm {
@@ -229,6 +257,8 @@ enum CommitmentTerm {
   QUARTERLY
   SEMESTER
   ANNUALLY
+
+  @@schema("icms")
 }
 
 enum PaymentTerm {
@@ -236,12 +266,16 @@ enum PaymentTerm {
   QUARTERLY
   SEMESTER
   ANNUALLY
+
+  @@schema("icms")
 }
 
 enum DiscountType {
   NONE
   PERCENTAGE
   FIXED
+
+  @@schema("icms")
 }
 
 enum BillingCycle {
@@ -249,6 +283,8 @@ enum BillingCycle {
   MONTHLY
   QUARTERLY
   ANNUALLY
+
+  @@schema("icms")
 }
 
 enum DocumentCategory {
@@ -257,6 +293,8 @@ enum DocumentCategory {
   INVOICE
   AMENDMENT
   OTHER
+
+  @@schema("icms")
 }
 
 enum ActionType {
@@ -265,15 +303,21 @@ enum ActionType {
   STATUS_CHANGE
   UPDATE
   CREATED
+
+  @@schema("icms")
 }
 
 enum NotificationChannel {
   EMAIL
   PUSH
+
+  @@schema("icms")
 }
 
 enum ContractAlertLogStatus {
   SENT
   READ
   FAILED
+
+  @@schema("icms")
 }
