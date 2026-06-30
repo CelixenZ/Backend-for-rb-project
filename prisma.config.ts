@@ -1,16 +1,19 @@
 import { config } from "dotenv";
 import { defineConfig } from "@prisma/config";
 
-// 1. Aggressively force-load the .env file in the current directory
+// Force-load the .env file in the current directory
 config({ path: "./.env" });
 
 export default defineConfig({
+  // Prisma 7 schema path as a clean string
   schema: "prisma/schema.prisma",
+  
   migrations: {
     path: "prisma/migrations",
   },
+  
   datasource: {
-    // 2. Read straight from the raw Node environment (bypassing Prisma's strict env checker)
+    // This tells the Prisma CLI where to point during migrations/pulls
     url: process.env.DATABASE_URL as string,
   },
 });
