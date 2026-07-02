@@ -9,6 +9,7 @@ import serviceRouter from "../modules/service/service.routes";
 import settingsRouter from "../modules/settings/settings.routes";
 import supplierRouter from "../modules/supplier/supplier.routes";
 import usersRouter from "../modules/users/users.routes";
+import reportRouter from "../modules/report/report.routes";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use("/services", serviceRouter);
 router.use("/settings", settingsRouter);
 router.use("/suppliers", supplierRouter);
 router.use("/users", usersRouter);
+router.use("/reports", reportRouter);
 
 export default router;

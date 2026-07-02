@@ -23,6 +23,7 @@
     "colors": "^1.4.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "http": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
@@ -30,6 +31,7 @@
     "nodemailer": "^8.0.11",
     "path": "^0.12.7",
     "pg": "^8.21.0",
+    "puppeteer-core": "^25.3.0",
     "socket.io": "^4.8.3",
     "zod": "^4.4.3"
   },
